@@ -31,29 +31,31 @@ class Chef
       end
 
       action :create do
-        include_recipe 'database::mysql'
+        create_db_command = "create database if not exists #{new_resource.name}"
+
+        execute "create db '#{new_resource.name}'" do
+          command "mysql -u root -p#{new_resource.mysql_root_password} -e \"#{create_db_command}\""
+        end
 
         new_resource.hosts.each do |current_host|
-          mysql_database_user new_resource.user do
-            connection new_resource.mysql_connection_info
-            password new_resource.user_password
-            host current_host
-            action :create
+          create_user_command = "create user '#{new_resource.user}'@'#{current_host}' identified by '#{new_resource.user_password}'"
+
+          execute "create db user '#{new_resource.user}'" do
+            command "mysql -u root -p#{new_resource.mysql_root_password} -e \"#{create_user_command}\""
+            not_if "mysql -u root -p#{new_resource.mysql_root_password} -D mysql -e \"select User from user\" | grep #{new_resource.user}"
+          end
+
+          grant_privileges_command = "grant all privileges on #{new_resource.name}.* to '#{new_resource.user}'@'#{current_host}'"
+
+          execute "grant '#{new_resource.user}'@'#{current_host}' privileges on db '#{new_resource.name}'" do
+            command "mysql -u root -p#{new_resource.mysql_root_password} -e \"#{grant_privileges_command}\""
+            not_if "mysql -u #{new_resource.user} -p#{new_resource.user_password} -e \"show databases\" | grep #{new_resource.name}"
           end
         end
 
-        Chef::Log.info("Creating database: #{new_resource.name}")
-
-        mysql_database new_resource.name do
-          connection new_resource.mysql_connection_info
-          action :create
-        end
-
-        mysql_database_user new_resource.user do
-          connection new_resource.mysql_connection_info
-          database_name new_resource.name
-          privileges [:all]
-          action :grant
+        execute 'flush privileges' do
+          command "mysql -u root -p#{new_resource.mysql_root_password} -e 'flush privileges'"
+          not_if "mysql -u root -p#{new_resource.mysql_root_password} -D mysql -e \"select User from user\" | grep #{new_resource.user}"
         end
       end
     end
