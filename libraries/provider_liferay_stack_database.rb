@@ -38,18 +38,10 @@ class Chef
         end
 
         new_resource.hosts.each do |current_host|
-          create_user_command = "create user '#{new_resource.user}'@'#{current_host}' identified by '#{new_resource.user_password}'"
-
-          execute "create db user '#{new_resource.user}'" do
-            command "mysql -u root -p#{new_resource.mysql_root_password} -e \"#{create_user_command}\""
-            not_if "mysql -u root -p#{new_resource.mysql_root_password} -D mysql -e \"select User from user\" | grep #{new_resource.user}"
-          end
-
-          grant_privileges_command = "grant all privileges on #{new_resource.name}.* to '#{new_resource.user}'@'#{current_host}'"
+          grant_privileges_command = "grant all privileges on #{new_resource.name}.* to '#{new_resource.user}'@'#{current_host}' identified by '#{new_resource.user_password}'"
 
           execute "grant '#{new_resource.user}'@'#{current_host}' privileges on db '#{new_resource.name}'" do
             command "mysql -u root -p#{new_resource.mysql_root_password} -e \"#{grant_privileges_command}\""
-            not_if "mysql -u #{new_resource.user} -p#{new_resource.user_password} -e \"show databases\" | grep #{new_resource.name}"
           end
         end
 
