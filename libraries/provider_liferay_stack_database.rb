@@ -34,6 +34,7 @@ class Chef
         create_db_command = "create database if not exists #{new_resource.name}"
 
         execute "create db '#{new_resource.name}'" do
+          sensitive true
           command "mysql -u root -p#{new_resource.mysql_root_password} -e \"#{create_db_command}\""
         end
 
@@ -41,11 +42,13 @@ class Chef
           grant_privileges_command = "grant all privileges on #{new_resource.name}.* to '#{new_resource.user}'@'#{current_host}' identified by '#{new_resource.user_password}'"
 
           execute "grant '#{new_resource.user}'@'#{current_host}' privileges on db '#{new_resource.name}'" do
+            sensitive true
             command "mysql -u root -p#{new_resource.mysql_root_password} -e \"#{grant_privileges_command}\""
           end
         end
 
         execute 'flush privileges' do
+            sensitive true
           command "mysql -u root -p#{new_resource.mysql_root_password} -e 'flush privileges'"
           not_if "mysql -u root -p#{new_resource.mysql_root_password} -D mysql -e \"select User from user\" | grep #{new_resource.user}"
         end
