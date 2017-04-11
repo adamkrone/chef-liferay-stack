@@ -41,10 +41,6 @@ class Chef
           group_id 8000
         end
 
-        ssh_import_id new_resource.deployment_user do
-          github_accounts new_resource.github_accounts
-        end
-
         liferay_app new_resource.app_name do
           user new_resource.deployment_user
           group new_resource.deployment_group
