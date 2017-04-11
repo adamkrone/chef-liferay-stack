@@ -34,7 +34,6 @@ class Chef
       attribute :tomcat_dir, kind_of: String, default: '/opt/liferay/current/liferay-portal-6.2-ce-ga4/tomcat-7.0.42'
       attribute :log_dir, kind_of: String, default: '/opt/liferay/current/liferay-portal-6.2-ce-ga4/tomcat-7.0.42/logs'
       attribute :github_accounts, kind_of: Array, required: true
-      attribute :provision_github_accounts, equal_to: [true, false], default: false
     end
   end
 end
